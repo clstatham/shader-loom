@@ -3,46 +3,129 @@ use naga::{BinaryOperator, Expression, Function, Handle, Module, TypeInner};
 use crate::interpreter::{value::Value, Interpreter};
 
 macro_rules! binary {
-    ($result:expr; i32; $op:expr, $left:expr, $right:expr) => {
+    ($result:ident; i32; $op:expr, $left:expr, $right:expr) => {
+        let $result = $result.try_get_mut::<i32>()?;
         match $op {
-            BinaryOperator::Add => $result = $left + $right,
-            BinaryOperator::Subtract => $result = $left - $right,
-            BinaryOperator::Multiply => $result = $left * $right,
-            BinaryOperator::Divide => $result = $left / $right,
-            BinaryOperator::Modulo => $result = $left % $right,
-            BinaryOperator::And => $result = $left & $right,
-            BinaryOperator::ExclusiveOr => $result = $left ^ $right,
-            BinaryOperator::InclusiveOr => $result = $left | $right,
+            BinaryOperator::Add => *$result = $left + $right,
+            BinaryOperator::Subtract => *$result = $left - $right,
+            BinaryOperator::Multiply => *$result = $left * $right,
+            BinaryOperator::Divide => *$result = $left / $right,
+            BinaryOperator::Modulo => *$result = $left % $right,
+            BinaryOperator::And => *$result = $left & $right,
+            BinaryOperator::ExclusiveOr => *$result = $left ^ $right,
+            BinaryOperator::InclusiveOr => *$result = $left | $right,
+            BinaryOperator::ShiftLeft => *$result = $left << $right,
+            BinaryOperator::ShiftRight => *$result = $left >> $right,
             _ => todo!("{:?}", $op),
         }
     };
-    ($result:expr; u32; $op:expr, $left:expr, $right:expr) => {
-        binary!($result; i32; $op, $left, $right)
-    };
-    ($result:expr; f32; $op:expr, $left:expr, $right:expr) => {
+    ($result:ident; u32; $op:expr, $left:expr, $right:expr) => {
+        let $result = $result.try_get_mut::<u32>()?;
         match $op {
-            BinaryOperator::Add => $result = $left + $right,
-            BinaryOperator::Subtract => $result = $left - $right,
-            BinaryOperator::Multiply => $result = $left * $right,
-            BinaryOperator::Divide => $result = $left / $right,
-            BinaryOperator::Modulo => $result = $left % $right,
+            BinaryOperator::Add => *$result = $left + $right,
+            BinaryOperator::Subtract => *$result = $left - $right,
+            BinaryOperator::Multiply => *$result = $left * $right,
+            BinaryOperator::Divide => *$result = $left / $right,
+            BinaryOperator::Modulo => *$result = $left % $right,
+            BinaryOperator::And => *$result = $left & $right,
+            BinaryOperator::ExclusiveOr => *$result = $left ^ $right,
+            BinaryOperator::InclusiveOr => *$result = $left | $right,
             _ => todo!("{:?}", $op),
         }
     };
-    ($result:expr; f64; $op:expr, $left:expr, $right:expr) => {
-        binary!($result; f32; $op, $left, $right)
-    };
-    ($result:expr; bool; $op:expr, $left:expr, $right:expr) => {
+    ($result:ident; f32; $op:expr, $left:expr, $right:expr) => {
+        let $result = $result.try_get_mut::<f32>()?;
         match $op {
-            BinaryOperator::And => $result = $left & $right,
-            BinaryOperator::ExclusiveOr => $result = $left ^ $right,
-            BinaryOperator::InclusiveOr => $result = $left | $right,
-            BinaryOperator::Equal => $result = ($left == $right) as u8,
-            BinaryOperator::NotEqual => $result = ($left != $right) as u8,
+            BinaryOperator::Add => *$result = $left + $right,
+            BinaryOperator::Subtract => *$result = $left - $right,
+            BinaryOperator::Multiply => *$result = $left * $right,
+            BinaryOperator::Divide => *$result = $left / $right,
             _ => todo!("{:?}", $op),
         }
     };
+    ($result:ident; f64; $op:expr, $left:expr, $right:expr) => {
+        let $result = $result.try_get_mut::<f64>()?;
+        match $op {
+            BinaryOperator::Add => *$result = $left + $right,
+            BinaryOperator::Subtract => *$result = $left - $right,
+            BinaryOperator::Multiply => *$result = $left * $right,
+            BinaryOperator::Divide => *$result = $left / $right,
+            _ => todo!("{:?}", $op),
+        }
+    };
+    ($result:ident; bool; $op:expr, $left:expr, $right:expr) => {
+        let $result = $result.try_get_mut::<u8>()?;
+        match $op {
+            BinaryOperator::And => *$result = $left & $right,
+            BinaryOperator::ExclusiveOr => *$result = $left ^ $right,
+            BinaryOperator::InclusiveOr => *$result = $left | $right,
+            BinaryOperator::Equal => *$result = ($left == $right) as u8,
+            _ => todo!("{:?}", $op),
+        }
+    };
+}
 
+macro_rules! binary_offset {
+    ($result:ident; i32; $offset:expr; $op:expr, $left:expr, $right:expr) => {
+        let $result = $result.try_get_offset_mut::<i32>($offset)?;
+        match $op {
+            BinaryOperator::Add => *$result = $left + $right,
+            BinaryOperator::Subtract => *$result = $left - $right,
+            BinaryOperator::Multiply => *$result = $left * $right,
+            BinaryOperator::Divide => *$result = $left / $right,
+            BinaryOperator::Modulo => *$result = $left % $right,
+            BinaryOperator::And => *$result = $left & $right,
+            BinaryOperator::ExclusiveOr => *$result = $left ^ $right,
+            BinaryOperator::InclusiveOr => *$result = $left | $right,
+            BinaryOperator::ShiftLeft => *$result = $left << $right,
+            BinaryOperator::ShiftRight => *$result = $left >> $right,
+            _ => todo!("{:?}", $op),
+        }
+    };
+    ($result:ident; u32; $offset:expr; $op:expr, $left:expr, $right:expr) => {
+        let $result = $result.try_get_offset_mut::<u32>($offset)?;
+        match $op {
+            BinaryOperator::Add => *$result = $left + $right,
+            BinaryOperator::Subtract => *$result = $left - $right,
+            BinaryOperator::Multiply => *$result = $left * $right,
+            BinaryOperator::Divide => *$result = $left / $right,
+            BinaryOperator::Modulo => *$result = $left % $right,
+            BinaryOperator::And => *$result = $left & $right,
+            BinaryOperator::ExclusiveOr => *$result = $left ^ $right,
+            BinaryOperator::InclusiveOr => *$result = $left | $right,
+            _ => todo!("{:?}", $op),
+        }
+    };
+    ($result:ident; f32; $offset:expr; $op:expr, $left:expr, $right:expr) => {
+        let $result = $result.try_get_offset_mut::<f32>($offset)?;
+        match $op {
+            BinaryOperator::Add => *$result = $left + $right,
+            BinaryOperator::Subtract => *$result = $left - $right,
+            BinaryOperator::Multiply => *$result = $left * $right,
+            BinaryOperator::Divide => *$result = $left / $right,
+            _ => todo!("{:?}", $op),
+        }
+    };
+    ($result:ident; f64; $offset:expr; $op:expr, $left:expr, $right:expr) => {
+        let $result = $result.try_get_offset_mut::<f64>($offset)?;
+        match $op {
+            BinaryOperator::Add => *$result = $left + $right,
+            BinaryOperator::Subtract => *$result = $left - $right,
+            BinaryOperator::Multiply => *$result = $left * $right,
+            BinaryOperator::Divide => *$result = $left / $right,
+            _ => todo!("{:?}", $op),
+        }
+    };
+    ($result:ident; bool; $offset:expr; $op:expr, $left:expr, $right:expr) => {
+        let $result = $result.try_get_offset_mut::<u8>($offset)?;
+        match $op {
+            BinaryOperator::And => *$result = $left & $right,
+            BinaryOperator::ExclusiveOr => *$result = $left ^ $right,
+            BinaryOperator::InclusiveOr => *$result = $left | $right,
+            BinaryOperator::Equal => *$result = ($left == $right) as u8,
+            _ => todo!("{:?}", $op),
+        }
+    };
 }
 
 impl<'a> Interpreter<'a> {
@@ -97,8 +180,7 @@ impl<'a> Interpreter<'a> {
                         4 => {
                             let left = left.try_get::<i32>()?;
                             let right = right.try_get::<i32>()?;
-                            let r = result.try_get_mut::<i32>()?;
-                            binary!(*r; i32; op, *left, *right);
+                            binary!(result; i32; op, *left, *right);
                         }
                         _ => todo!("{:?}", left_width),
                     },
@@ -106,8 +188,7 @@ impl<'a> Interpreter<'a> {
                         4 => {
                             let left = left.try_get::<u32>()?;
                             let right = right.try_get::<u32>()?;
-                            let r = result.try_get_mut::<u32>()?;
-                            binary!(*r; u32; op, *left, *right);
+                            binary!(result; u32; op, *left, *right);
                         }
                         _ => todo!("{:?}", left_width),
                     },
@@ -115,14 +196,12 @@ impl<'a> Interpreter<'a> {
                         4 => {
                             let left = left.try_get::<f32>()?;
                             let right = right.try_get::<f32>()?;
-                            let r = result.try_get_mut::<f32>()?;
-                            binary!(*r; f32; op, *left, *right);
+                            binary!(result; f32; op, *left, *right);
                         }
                         8 => {
                             let left = left.try_get::<f64>()?;
                             let right = right.try_get::<f64>()?;
-                            let r = result.try_get_mut::<f64>()?;
-                            binary!(*r; f64; op, *left, *right);
+                            binary!(result; f64; op, *left, *right);
                         }
                         _ => todo!("{:?}", left_width),
                     },
@@ -130,8 +209,7 @@ impl<'a> Interpreter<'a> {
                         1 => {
                             let left = left.try_get::<u8>()?;
                             let right = right.try_get::<u8>()?;
-                            let r = result.try_get_mut::<u8>()?;
-                            binary!(*r; bool; op, *left, *right);
+                            binary!(result; bool; op, *left, *right);
                         }
                         _ => todo!("{:?}", left_width),
                     },
@@ -177,8 +255,7 @@ impl<'a> Interpreter<'a> {
                             for i in 0..left_size as usize {
                                 let left = left.try_get_offset::<i32>(i * 4)?;
                                 let right = right.try_get_offset::<i32>(i * 4)?;
-                                let r = result.try_get_offset_mut::<i32>(i * 4)?;
-                                binary!(*r; i32; op, *left, *right);
+                                binary_offset!(result; i32; i * 4; op, *left, *right);
                             }
                         }
                         _ => todo!("{:?}", left_width),
@@ -188,8 +265,7 @@ impl<'a> Interpreter<'a> {
                             for i in 0..left_size as usize {
                                 let left = left.try_get_offset::<u32>(i * 4)?;
                                 let right = right.try_get_offset::<u32>(i * 4)?;
-                                let r = result.try_get_offset_mut::<u32>(i * 4)?;
-                                binary!(*r; u32; op, *left, *right);
+                                binary_offset!(result; u32; i * 4; op, *left, *right);
                             }
                         }
                         _ => todo!("{:?}", left_width),
@@ -199,16 +275,14 @@ impl<'a> Interpreter<'a> {
                             for i in 0..left_size as usize {
                                 let left = left.try_get_offset::<f32>(i * 4)?;
                                 let right = right.try_get_offset::<f32>(i * 4)?;
-                                let r = result.try_get_offset_mut::<f32>(i * 4)?;
-                                binary!(*r; f32; op, *left, *right);
+                                binary_offset!(result; f32; i * 4; op, *left, *right);
                             }
                         }
                         8 => {
                             for i in 0..left_size as usize {
                                 let left = left.try_get_offset::<f64>(i * 8)?;
                                 let right = right.try_get_offset::<f64>(i * 8)?;
-                                let r = result.try_get_offset_mut::<f64>(i * 8)?;
-                                binary!(*r; f64; op, *left, *right);
+                                binary_offset!(result; f64; i * 8; op, *left, *right);
                             }
                         }
                         _ => todo!("{:?}", left_width),
@@ -218,8 +292,7 @@ impl<'a> Interpreter<'a> {
                             for i in 0..left_size as usize {
                                 let left = left.try_get_offset::<u8>(i)?;
                                 let right = right.try_get_offset::<u8>(i)?;
-                                let r = result.try_get_offset_mut::<u8>(i)?;
-                                binary!(*r; bool; op, *left, *right);
+                                binary_offset!(result; bool; i; op, *left, *right);
                             }
                         }
                         _ => todo!("{:?}", left_width),
