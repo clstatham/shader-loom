@@ -2,6 +2,8 @@ use naga::{Expression, Handle, Module, TypeInner};
 
 use super::{type_name, Interpreter, Value};
 
+pub mod binary;
+
 impl<'a> Interpreter<'a> {
     pub(super) fn expression(
         &mut self,
@@ -81,129 +83,7 @@ impl<'a> Interpreter<'a> {
                 Ok(value)
             }
             naga::Expression::Binary { op, left, right } => {
-                let left = self.expression(module, left, func)?;
-                let right = self.expression(module, right, func)?;
-                let size = left.data.len();
-                if size != right.data.len() {
-                    return Err(anyhow::anyhow!(
-                        "Invalid binary expression: left size {}, right size {}",
-                        left.data.len(),
-                        right.data.len()
-                    ));
-                }
-                let mut data = vec![0; size];
-
-                match op {
-                    naga::BinaryOperator::Add => match left.ty {
-                        TypeInner::Scalar { kind, width } => match kind {
-                            naga::ScalarKind::Sint => match width {
-                                4 => {
-                                    let left = left.try_get::<i32>()?;
-                                    let right = right.try_get::<i32>()?;
-                                    let result = left + right;
-                                    data.copy_from_slice(bytemuck::bytes_of(&result));
-                                }
-                                _ => todo!("{:?}", width),
-                            },
-                            naga::ScalarKind::Uint => match width {
-                                4 => {
-                                    let left = left.try_get::<u32>()?;
-                                    let right = right.try_get::<u32>()?;
-                                    let result = left + right;
-                                    data.copy_from_slice(bytemuck::bytes_of(&result));
-                                }
-                                _ => todo!("{:?}", width),
-                            },
-                            naga::ScalarKind::Float => match width {
-                                4 => {
-                                    let left = left.try_get::<f32>()?;
-                                    let right = right.try_get::<f32>()?;
-                                    let result = left + right;
-                                    data.copy_from_slice(bytemuck::bytes_of(&result));
-                                }
-                                _ => todo!("{:?}", width),
-                            },
-                            naga::ScalarKind::Bool => {
-                                let left = left.try_get::<u8>()?;
-                                let right = right.try_get::<u8>()?;
-                                let result = left + right;
-                                data.copy_from_slice(bytemuck::bytes_of(&result));
-                            }
-                        },
-                        TypeInner::Vector { size, kind, width } => {
-                            if let TypeInner::Vector {
-                                size: right_size,
-                                kind: right_kind,
-                                width: right_width,
-                            } = right.ty
-                            {
-                                if size != right_size || kind != right_kind || width != right_width
-                                {
-                                    return Err(anyhow::anyhow!(
-                                        "Invalid binary expression: left type {:?}, right type {:?}",
-                                        left.ty,
-                                        right.ty
-                                    ));
-                                }
-                            } else {
-                                return Err(anyhow::anyhow!(
-                                    "Invalid binary expression: left type {:?}, right type {:?}",
-                                    left.ty,
-                                    right.ty
-                                ));
-                            }
-                            let size = *size as usize;
-                            let width = *width as usize;
-                            for i in 0..size {
-                                match kind {
-                                    naga::ScalarKind::Sint => match width {
-                                        4 => {
-                                            let left = left.try_get_offset::<i32>(i * width)?;
-                                            let right = right.try_get_offset::<i32>(i * width)?;
-                                            let result = left + right;
-                                            data[i * width..(i + 1) * width]
-                                                .copy_from_slice(bytemuck::bytes_of(&result));
-                                        }
-                                        _ => todo!("{:?}", width),
-                                    },
-                                    naga::ScalarKind::Uint => match width {
-                                        4 => {
-                                            let left = left.try_get_offset::<u32>(i * width)?;
-                                            let right = right.try_get_offset::<u32>(i * width)?;
-                                            let result = left + right;
-                                            data[i * width..(i + 1) * width]
-                                                .copy_from_slice(bytemuck::bytes_of(&result));
-                                        }
-                                        _ => todo!("{:?}", width),
-                                    },
-                                    naga::ScalarKind::Float => match width {
-                                        4 => {
-                                            let left = left.try_get_offset::<f32>(i * width)?;
-                                            let right = right.try_get_offset::<f32>(i * width)?;
-                                            let result = left + right;
-                                            data[i * width..(i + 1) * width]
-                                                .copy_from_slice(bytemuck::bytes_of(&result));
-                                        }
-                                        _ => todo!("{:?}", width),
-                                    },
-                                    naga::ScalarKind::Bool => {
-                                        let left = left.try_get_offset::<u8>(i * width)?;
-                                        let right = right.try_get_offset::<u8>(i * width)?;
-                                        let result = left + right;
-                                        data[i * width..(i + 1) * width]
-                                            .copy_from_slice(bytemuck::bytes_of(&result));
-                                    }
-                                }
-                            }
-                        }
-                        _ => todo!("{:?}", left.ty),
-                    },
-                    _ => todo!("{:?}", op),
-                }
-
-                let value = Value::from_data(left.ty, data);
-
-                Ok(value)
+                self.binary(module, func, op, left, right)
             }
             expr => todo!("{:?}", expr),
         }
