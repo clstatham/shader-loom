@@ -41,7 +41,7 @@ fn main() -> anyhow::Result<()> {
             #[cfg(feature = "wgsl")]
             {
                 let module = naga::front::wgsl::parse_str(&source)?;
-                interpreter.run(module)?;
+                interpreter.run(&module)?;
             }
             #[cfg(not(feature = "wgsl"))]
             {
