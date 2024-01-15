@@ -208,7 +208,7 @@ impl Interpreter {
         if self.verbosity > 0 {
             println!("Statement: {:?}", stmt);
         }
-        if self.verbosity > 2 {
+        if self.verbosity > 0 {
             if let Some(scope) = self.current_scope() {
                 println!("Variables:\n{}", scope.try_display(2)?);
             }

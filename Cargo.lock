@@ -401,6 +401,7 @@ dependencies = [
  "indexmap",
  "log",
  "num-traits",
+ "pp-rs",
  "rustc-hash",
  "termcolor",
  "thiserror",
@@ -436,6 +437,15 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "39e3200413f237f41ab11ad6d161bc7239c84dcb631773ccd7de3dfe4b5c267c"
 dependencies = [
  "autocfg",
+]
+
+[[package]]
+name = "pp-rs"
+version = "0.2.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "bb458bb7f6e250e6eb79d5026badc10a3ebb8f9a15d1fff0f13d17c71f4d6dee"
+dependencies = [
+ "unicode-xid",
 ]
 
 [[package]]
